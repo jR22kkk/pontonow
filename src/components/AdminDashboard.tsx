@@ -57,6 +57,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Clear Audit Logs (Punches) Modal state
+  const [isClearPunchesModalOpen, setIsClearPunchesModalOpen] = useState(false);
+  const [clearPunchesSubmitting, setClearPunchesSubmitting] = useState(false);
+  const [clearPunchesError, setClearPunchesError] = useState<string | null>(null);
+
   // Load backend data from Firestore
   const loadData = async () => {
     setLoading(true);
@@ -270,6 +275,27 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       handleFirestoreError(err, OperationType.DELETE, `employees/${empId}`);
     } finally {
       setDeleteSubmitting(false);
+    }
+  };
+
+  // Clear all punches from Firestore database (and state)
+  const handleClearAllPunches = async () => {
+    setClearPunchesSubmitting(true);
+    setClearPunchesError(null);
+    try {
+      const snap = await getDocs(collection(db, 'punches'));
+      const deletePromises: Promise<void>[] = [];
+      snap.forEach((docRef) => {
+        deletePromises.push(deleteDoc(doc(db, 'punches', docRef.id)));
+      });
+      await Promise.all(deletePromises);
+      setIsClearPunchesModalOpen(false);
+      loadData();
+    } catch (err) {
+      setClearPunchesError('Falha ao limpar o histórico de pontos no banco de dados.');
+      handleFirestoreError(err, OperationType.DELETE, 'punches');
+    } finally {
+      setClearPunchesSubmitting(false);
     }
   };
 
@@ -582,6 +608,17 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     >
                       <Download className="w-4 h-4" />
                       Exportar Relatório (PDF)
+                    </button>
+                    <button
+                      id="admin-clear-punches-btn"
+                      onClick={() => {
+                        setClearPunchesError(null);
+                        setIsClearPunchesModalOpen(true);
+                      }}
+                      className="flex items-center gap-2 py-2.5 px-4 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-xl cursor-pointer transition border border-rose-200/60 dark:border-rose-900/40 shadow-xs"
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-550 dark:text-rose-400" />
+                      Limpar Histórico
                     </button>
                   </div>
                 </div>
@@ -1229,6 +1266,77 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </>
                   ) : (
                     'Excluir'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {isClearPunchesModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-150 dark:border-slate-850 shadow-2xl overflow-hidden"
+              id="punches-clear-confirm-modal"
+            >
+              <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <h3 className="font-display font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 text-rose-600">
+                    <Trash2 className="w-5 h-5 animate-pulse" /> Limpar Histórico de Pontos
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Esta ação é irreversível
+                  </p>
+                </div>
+                <button
+                  id="close-clear-punches-modal-btn"
+                  type="button"
+                  onClick={() => setIsClearPunchesModalOpen(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 text-left space-y-4">
+                {clearPunchesError && (
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-xs rounded-xl border border-rose-200 dark:border-rose-900/30">
+                    {clearPunchesError}
+                  </div>
+                )}
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Tem certeza que deseja <strong className="font-semibold text-slate-850 dark:text-slate-100">limpar todos os registros de ponto</strong> salvos no sistema?
+                  <span className="block mt-2 text-xs text-slate-400 dark:text-slate-500">
+                    Esta ação excluirá permanentemente todos os relatórios cadastrados e limpará os dados de todos os gráficos de auditoria.
+                  </span>
+                </p>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-end gap-2.5">
+                <button
+                  id="cancel-clear-punches-btn"
+                  type="button"
+                  onClick={() => setIsClearPunchesModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl cursor-pointer transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  id="confirm-clear-punches-btn"
+                  type="button"
+                  disabled={clearPunchesSubmitting}
+                  onClick={handleClearAllPunches}
+                  className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-650 hover:opacity-95 text-white text-xs font-bold rounded-xl shadow cursor-pointer transition flex items-center gap-1"
+                >
+                  {clearPunchesSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Limpando...
+                    </>
+                  ) : (
+                    'Sim, limpar tudo'
                   )}
                 </button>
               </div>
