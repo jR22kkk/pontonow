@@ -1,0 +1,6 @@
+{
+  "name": "Controle de Ponto Inteligente",
+  "description": "Aplicativo de registro de ponto eletrônico corporativo com auditoria GPS e reconhecimento facial biométrico para funcionários e administradores.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

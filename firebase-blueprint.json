@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "An employee registered in the time tracking system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the employee" },
+        "name": { "type": "string", "description": "Full name of the employee" },
+        "phone": { "type": "string", "description": "Cell phone number for verification" },
+        "isActive": { "type": "boolean", "description": "Whether the employee is active or deactivated" },
+        "role": { "type": "string", "enum": ["employee", "admin"], "description": "System role" },
+        "createdAt": { "type": "string", "description": "Creation ISO date/time" }
+      },
+      "required": ["name", "phone", "isActive", "role", "createdAt"]
+    },
+    "Punch": {
+      "title": "Punch",
+      "description": "A time clock punch log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique punch identifier" },
+        "employeeId": { "type": "string", "description": "Referenced Employee ID" },
+        "employeeName": { "type": "string", "description": "Full name at the moment of punch" },
+        "employeePhone": { "type": "string", "description": "Employee phone at the moment of punch" },
+        "timestamp": { "type": "string", "description": "ISO date string of punch occurrence" },
+        "type": { "type": "string", "enum": ["entrada", "intervalo_saida", "intervalo_entrada", "saida"], "description": "Punch type auto-detected" },
+        "photo": { "type": "string", "description": "Base64 camera photo or selfie" },
+        "latitude": { "type": "number", "description": "GPS latitude value" },
+        "longitude": { "type": "number", "description": "GPS longitude value" },
+        "createdAt": { "type": "string", "description": "Database document creation timestamp" }
+      },
+      "required": ["employeeId", "employeeName", "employeePhone", "timestamp", "type", "photo", "latitude", "longitude", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Registered employees and admins list"
+    },
+    "/punches/{punchId}": {
+      "schema": "Punch",
+      "description": "Historical time tracking logs with evidence"
+    }
+  }
+}

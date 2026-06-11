@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Employees Collection Rules
+    match /employees/{employeeId} {
+      // Allow read to find/verify employee name and phone number
+      allow read: if true;
+      // Allow create/update/delete for admin actions (managed within React)
+      allow write: if true;
+    }
+
+    // Punches Collection Rules
+    match /punches/{punchId} {
+      // Allow read to show punch lists and admin reports
+      allow read: if true;
+      // Allow write to submit punches
+      allow write: if true;
+    }
+  }
+}
